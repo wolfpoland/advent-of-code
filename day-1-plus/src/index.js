@@ -30,17 +30,36 @@ function extractCombinedNumbersFromLine(line) {
     if ((isNumber(firstChar) && isNumber(lastChar))) {
         return combineNumbers(firstChar, lastChar);
     }
-    const mappedLine = mapWordsToNumbersInLine(line);
-    const collectedNumbers = mappedLine.split("").reduce((acc, curr) => {
-        if (isNumber(curr)) {
-            acc.push(curr);
+    const entries = new Map();
+    const splitArray = line.split("");
+    let stringBuffer = '';
+    for (let i = 0; i < splitArray.length; i++) {
+        const value = splitArray[i];
+        const itsANumber = isNumber(value);
+        if (itsANumber) {
+            entries.set(i, {
+                value,
+                isNumber: itsANumber
+            });
+            continue;
         }
-        return acc;
-    }, []);
-    if (collectedNumbers.length === 1) {
-        return combineNumbers(collectedNumbers[0], collectedNumbers[0]);
+        stringBuffer += value;
+        mapWordsToNumbersMap.forEach((_, key) => {
+            const index = stringBuffer.length - 1;
+            if (stringBuffer.includes(key)) {
+                entries.set(i, {
+                    value: key,
+                    isNumber: false
+                });
+                stringBuffer = stringBuffer.slice(0, index - (key.length - 1)) + value;
+            }
+        });
     }
-    return combineNumbers(collectedNumbers[0], collectedNumbers[collectedNumbers.length - 1]);
+    const maxKey = Math.max(...entries.keys());
+    const minKey = Math.min(...entries.keys());
+    const minEntry = entries.get(minKey);
+    const maxEntry = entries.get(maxKey);
+    return combineNumbers(minEntry.isNumber ? minEntry.value : mapWordsToNumbersMap.get(minEntry.value), maxEntry.isNumber ? maxEntry.value : mapWordsToNumbersMap.get(maxEntry.value));
 }
 function isNumber(word) {
     return !isNaN(parseInt(word));
